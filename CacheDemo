@@ -1,0 +1,43 @@
+package com.enhance.java5;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+/**
+ * 模拟缓存
+ * @author T_T
+ *
+ */
+public class CacheDemo {
+
+	private Map<String,Object> cache = new HashMap<String,Object>();
+	private ReadWriteLock rwl = new ReentrantReadWriteLock();
+	public static void main(String[] args) {
+		CacheDemo demo = new CacheDemo();
+		System.out.println(demo.getData("test"));
+	}
+	public Object getData(String key){
+		rwl.readLock().lock();
+		Object value = null;
+		
+		try {
+			value = cache.get(key);
+			if (value == null) {
+				try {
+					rwl.readLock().unlock();
+					rwl.writeLock().lock();
+					if(cache.get(key) == null){
+						value = "ABC" + key;	
+					}
+				} finally {
+					rwl.writeLock().unlock();
+					rwl.readLock().lock();
+				}
+			} 
+		} finally {
+			rwl.readLock().unlock();
+		}
+		return value;
+	}
+}
